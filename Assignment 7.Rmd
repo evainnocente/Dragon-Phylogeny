@@ -1,0 +1,146 @@
+---
+title: "Assignment 7"
+author: "Eva Burguete-Innocente 20154735"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+[Link to my github](https://github.com/evainnocente/Dragon-Phylogeny.git)
+
+Loading ape library and Dragon Nexus file.
+```{r}
+library(ape)
+
+dragondat<-read.nexus.data("DragonMatrix.nex")
+
+```
+
+Coding the traits of my dragons and making them into list objects.
+
+```{r}
+Slovenian<-c("100100110100100000001000100101100001100001100001110010001111100011010011100")
+              
+Slovenian<-strsplit(Slovenian, split="")
+Slovenian
+
+Welsh<-c("1001001101001100000001010001111011000011000011000001011100111000011000011100")
+
+Welsh<-strsplit(Welsh,split="")
+Welsh
+
+Toothless<-c("100111111110000100101001110101000001000001000000000001000111000000000011100")
+
+Toothless<-strsplit(Toothless,split="")
+Toothless
+```
+Adding these lists to pre-existing nexus dataset and checking how it worked.
+
+```{r}
+
+dragondat$Slovenian<-Slovenian
+dragondat$Welsh<-Welsh
+dragondat$Toothless<-Toothless
+
+tail(dragondat)
+
+```
+
+I imported the weights data given to us in the tutorial.
+
+```{r}
+weightdat<-read.csv("C:/Users/evain/OneDrive - Queen's University/university/BIOL 432/week 7/Assignment 7/data/DragonPhylogeny-master/Data/Weights.csv")
+```
+
+Creating a vector of the weights.
+
+```{r}
+weight<-paste0(weightdat$Weight,collapse="")
+weight<-strsplit(weight,split="")[[1]]
+```
+
+Converting the letters to a value.
+
+```{r}
+
+weightsnum<-rep(NA,length(weight))
+for(i in 1:length(weightsnum)){
+  if(weight[i] %in% LETTERS){
+    weightsnum[i]<-which(LETTERS==weight[i])+9
+  } else {
+    weightsnum[i]<-weight[i]
+  }
+}
+
+weightsnum<-as.numeric(weightsnum)
+
+```
+
+Multiplying each weight value by the trait vector for each dragon.
+
+```{r}
+dragondat2<-as.numeric(unlist(dragondat))
+wtdragonnexus<-dragondat2
+for (i in 1:length(dragondat2)){
+  RepWeight<-dragondat2[[i]]==1
+  wtdragonnexus[[i]][RepWeight]<-weightsnum[RepWeight]
+  RepWeight<-NA
+}
+
+```
+
+Recalculating the distance matrix.
+
+```{r}
+wtdragonnexusdf<-data.frame(matrix(unlist(wtdragonnexus),ncol=78, byrow=T))
+
+
+row.names(wtdragonnexusdf)<-names(dragondat)
+
+wtdragondist<-dist(wtdragonnexusdf,method="euclidean")
+wtdragondist
+wtdragondistmat<-as.matrix(wtdragondist)
+
+```
+
+
+Images of my dragons:
+        
+![_Slovenian dragon statue_.](C:/Users/evain/OneDrive - Queen's University/university/BIOL 432/Week 7/images/dragon 1 (statue).jpg)
+
+[Link to image](https://www.smithsonianmag.com/science-nature/where-did-dragons-come-from-23969126/)
+
+![_Dragon on Welsh flag_.](C:/Users/evain/OneDrive - Queen's University/university/BIOL 432/Week 7/images/dragon 2 (welsh flag).jpg)
+
+[Link to image](https://www.epuzzle.info/en/puzzle/play/holidays/71814-welsh-flag#15x10)
+
+![_Toothless from How to Train Your Dragon_.](C:/Users/evain/OneDrive - Queen's University/university/BIOL 432/Week 7/images/dragon 3 (toothless).jpg)
+
+[Link to image](https://www.dreamworks.com/how-to-train-your-dragon/explore/toothless)
+
+Citations:
+Dreamworks. (n.d.). DreamWorks. Retrieved 1 March 2023, from https://www.dreamworks.com/how-to-train-your-dragon/explore/toothless
+
+Magazine, S., & Stromberg, J. (2012). Where did dragons come from? Smithsonian Magazine. https://www.smithsonianmag.com/science-nature/where-did-dragons-come-from-23969126/
+
+Welsh Flag—EPuzzle photo puzzle. (n.d.). EPuzzle. Retrieved 1 March 2023, from https://www.epuzzle.info/en/puzzle/play/holidays/71814-welsh-flag
+
+
+Creating a phylogeny and colouring where my dragons land on it. I tried to fix the very long branch lengths and weird-looking tree but I couldn't figure out how to do it. 
+
+```{r}
+wtdragontree<-fastme.bal(wtdragondist)
+
+wtdragontreeNJ<-nj(wtdragondist)
+
+library(ggtree)
+
+ggtree(wtdragontreeNJ,layout="rectangular")+geom_tiplab(aes(subset=c(label %in% c("Slovenian", "Welsh", "Toothless")), color=label))+scale_colour_discrete("My Dragons")
+
+```
+Figure 1: Phylogenetic tree of dragons.
+
+Fictional backstory and data interpretation:
+
+My dragons seem to belong to the same clade or are somewhat closely related. I imagine that the Slovenian dragon evolved from the common ancestor of all European dragons. The European common ancestor spread out and diversified into Britain, where the common ancestor of all British dragons eventually gave rise to Welsh dragons. In fact, the country of Wales was so densely populated by dragons, and the animal so revered, that a dragon is depicted on the country's flag. 
+
+Toothless the dragon is not as closely related to the other two dragons. His origins are not as clear (since he is a cartoon) but it seems that he is in a monophyletic clade, and this is also reflected in his appearance. 
